@@ -1,6 +1,6 @@
-import React, {forwardRef, useEffect, useImperativeHandle, useRef, useState} from "react";
+import React, { useEffect, useState} from "react";
 
-interface ITimer {
+interface ITimerProps {
     id: string | number;
     time: number;
     onTimeUp?: () => void;
@@ -10,52 +10,34 @@ export interface TimerRef {
     reset: () => void;
 }
 
-const Timer = forwardRef<TimerRef, ITimer>(({id, time, onTimeUp, ...props}, ref) => {
-    const [timer, setTimer] = useState<number>(time);
-    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+const Timer : React.FC<ITimerProps> =(({ id, time, onTimeUp }) => {
+    const [timer, setTimer] = useState(time);
 
-    const clear = () => {
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-        }
-    };
-
-    const start = () => {
-        clear();
-        intervalRef.current = setInterval(() => {
-            setTimer(prev => {
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTimer((prev) => {
                 if (prev <= 1) {
-                    clear();
+                    clearInterval(interval);
                     if (onTimeUp) onTimeUp();
                     return 0;
                 }
                 return prev - 1;
             });
         }, 1000);
-    };
 
-    const reset = () => {
-        clear();
-        setTimer(time);
-        start();
-    };
-
-    useImperativeHandle(ref, () => ({
-        reset
-    }));
+        return () => clearInterval(interval);
+    }, [onTimeUp]);
 
     useEffect(() => {
-        start();
-        return () => clear();
-    }, [id]);
+        setTimer(time);
+    }, [time]);
 
     return (
-        <div className="quiz-timer" {...props}>
+        <div className="quiz-timer">
             <p className="timer-text">
-        <span className="transition duration-500 ease-in-out text-gray-900 dark:text-gray-100 font-semibold">
-          {timer}
-        </span>{" "}
+                <span className="transition duration-500 text-gray-900 dark:text-gray-100 font-semibold">
+                    {timer}
+                </span>
                 seconds
             </p>
         </div>
